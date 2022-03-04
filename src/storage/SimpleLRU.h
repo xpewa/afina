@@ -70,6 +70,7 @@ private:
     void freeSpace(lru_node* node);
     void putAbsent(const std::string &key, const std::string &value);
     void setNode(lru_node* node, const std::string &value);
+    void moveToHead(lru_node* node);
 };
 
 } // namespace Backend

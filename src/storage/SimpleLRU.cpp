@@ -35,7 +35,7 @@ void SimpleLRU::freeSpace(lru_node* node = nullptr) {
         if (!node || node->next) {
             deleteNode(_lru_tail);
         }
-        else {
+        else if (node->prev) {
             deleteNode(node->prev);
         }
     }
@@ -58,11 +58,7 @@ void SimpleLRU::putAbsent(const std::string &key, const std::string &value) {
     _lru_index.emplace(_lru_head->key, *_lru_head);
 }
 
-void SimpleLRU::setNode(lru_node* node, const std::string &value) {
-    _current_size += value.size() - node->value.size();
-    freeSpace(node);
-    node->value = value;
-
+void SimpleLRU::moveToHead(lru_node* node) {
     auto prev = node->prev;
     auto next = node->next.get();
     if (!prev) {
@@ -86,6 +82,14 @@ void SimpleLRU::setNode(lru_node* node, const std::string &value) {
     }
     _lru_tail->next = nullptr;
     _lru_head->prev = nullptr;
+}
+
+void SimpleLRU::setNode(lru_node* node, const std::string &value) {
+    _current_size += value.size() - node->value.size();
+    freeSpace(node);
+    node->value = value;
+
+    moveToHead(node);
 }
 
 // See MapBasedGlobalLockImpl.h
@@ -146,7 +150,7 @@ bool SimpleLRU::Get(const std::string &key, std::string &value) {
     }
     value = node->second.get().value;
 
-    setNode(&node->second.get(), value);
+    moveToHead(&node->second.get());
     return true;
 }
 
